@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NEON DEFENSE</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  height:100%;
+  background:#050616;
+  color:#fff;
+  font-family:'Segoe UI',Arial,sans-serif;
+  overflow:hidden;
+  overscroll-behavior:none;
+  touch-action:none;
+}
+#app{
+  position:relative;
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:8px;
+  gap:8px;
+}
+#top{
+  width:min(980px,100%);
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:space-between;
+  align-items:center;
+  background:rgba(0,20,40,.55);
+  border:1px solid rgba(0,255,255,.25);
+  border-radius:12px;
+  padding:8px 12px;
+  backdrop-filter:blur(6px);
+  z-index:10;
+}
+.stat{
+  font-size:15px;
+  font-weight:800;
+  letter-spacing:1px;
+  white-space:nowrap;
+}
+.stat span{color:#0ff}
+#gameWrap{
+  position:relative;
+  width:min(980px,100%);
+  flex-shrink:0;
+}
+canvas{
+  display:block;
+  width:100%;
+  height:auto;
+  background:#07091a;
+  border:1px solid rgba(0,255,255,.25);
+  border-radius:14px;
+  box-shadow:0 0 30px rgba(0,255,255,.12);
+  cursor:crosshair;
+}
+#bottom{
+  width:min(980px,100%);
+  display:flex;
+  gap:8px;
+  align-items:stretch;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  z-index:10;
+}
+#shop{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  flex:1;
+}
+.shopBtn{
+  min-width:80px;
+  padding:10px 8px;
+  border-radius:10px;
+  border:2px solid rgba(0,255,255,.35);
+  background:rgba(0,20,40,.6);
+  color:#0ff;
+  font-weight:800;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  font-size:14px;
+  transition:.2s;
+  user-select:none;
+}
+.shopBtn small{
+  color:#9ad;
+  font-size:11px;
+  font-weight:700;
+}
+.shopBtn:hover{
+  background:rgba(0,114,255,.22);
+  transform:translateY(-2px);
+}
+.shopBtn.active{
+  background:rgba(0,114,255,.4);
+  border-color:#0ff;
+  color:#fff;
+  box-shadow:0 0 15px rgba(0,255,255,.4);
+}
+.shopBtn.disabled{
+  opacity:.4;
+  filter:grayscale(1);
+  pointer-events:none;
+}
+#info{
+  flex:1;
+  min-width:200px;
+  max-width:300px;
+  background:rgba(0,20,40,.55);
+  border:1px solid rgba(0,255,255,.2);
+  border-radius:12px;
+  padding:10px;
+  font-size:13px;
+  line-height:1.4;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+#info b{color:#0ff;font-size:15px;display:block;margin-bottom:4px}
+#actions{
+  display:flex;
+  gap:6px;
+  margin-top:8px;
+}
+.action{
+  flex:1;
+  padding:8px;
+  border-radius:8px;
+  border:1px solid rgba(0,255,255,.3);
+  background:rgba(0,255,255,.1);
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+  text-align:center;
+  font-size:12px;
+}
+.action.sell{
+  border-color:rgba(255,80,80,.45);
+  background:rgba(255,0,0,.12);
+  color:#ffb0b0;
+}
+.action:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
+#nextBtn{
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid rgba(0,255,0,.4);
+  background:rgba(0,255,0,.12);
+  color:#bfffbf;
+  font-weight:900;
+  cursor:pointer;
+  font-size:14px;
+}
+#nextBtn:hover{background:rgba(0,255,0,.22)}
+#nextBtn:disabled{opacity:.5;cursor:not-allowed}
+
+.overlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,rgba(5,0,20,.98),rgba(0,20,50,.98));
+  z-index:50;
+  text-align:center;
+  padding:20px;
+  border-radius:14px;
+}
+.overlay h1{
+  font-size:min(13vw,72px);
+  color:#fff;
+  text-shadow:0 0 15px #0ff,0 0 40px #08f;
+  letter-spacing:5px;
+  margin-bottom:10px;
+}
+.overlay p{
+  color:#9fd;
+  font-size:16px;
+  margin-bottom:24px;
+  max-width:620px;
+  line-height:1.6;
+}
+.bigBtn{
+  padding:14px 28px;
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:2px;
+  border-radius:12px;
+  border:2px solid #0ff;
+  background:rgba(0,114,255,.25);
+  color:#fff;
+  cursor:pointer;
+  box-shadow:0 0 25px rgba(0,255,255,.25);
+  transition:.2s;
+}
+.bigBtn:hover{
+  background:rgba(0,114,255,.45);
+  transform:scale(1.05);
+}
+.hidden{display:none!important}
+
+/* Стили для Game Over */
+#overScreen h1{
+  color:#ff3333;
+  text-shadow:0 0 20px #ff0000, 0 0 40px #aa0000;
+}
+#overScreen .stats-list{
+  list-style:none;
+  font-size:18px;
+  color:#ddd;
+  margin-bottom:20px;
+}
+#overScreen .stats-list li{
+  margin:5px 0;
+}
+#overScreen .stats-list span{
+  color:#0ff;
+  font-weight:bold;
+}
+
+@media(max-width:700px){
+  .stat{font-size:12px}
+  #info{min-width:100%;order:-1;margin-bottom:5px}
+  .shopBtn{min-width:60px;font-size:12px;padding:8px 4px}
+  .shopBtn small{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="top">
+    <div class="stat">Волна: <span id="waveTxt">0</span></div>
+    <div class="stat">💰 <span id="moneyTxt">0</span></div>
+    <div class="stat">❤️ Жизни: <span id="livesTxt">20</span></div>
+    <div class="stat">☠️ Убито: <span id="killsTxt">0</span></div>
+    <button id="nextBtn">▶ Начать волну</button>
+  </div>
+
+  <div id="gameWrap">
+    <canvas id="game" width="960" height="600"></canvas>
+
+    <!-- Стартовое меню -->
+    <div id="menu" class="overlay">
+      <h1>NEON DEFENSE</h1>
+      <p>
+        Ставь башни на свободные клетки.<br>
+        Защити базу от роботов!<br>
+        Каждые 5 волн приходит БОСС.
+      </p>
+      <button class="bigBtn" id="playBtn">ИГРАТЬ</button>
+    </div>
+
+    <!-- Экран поражения -->
+    <div id="overScreen" class="overlay hidden">
+      <h1>GAME OVER</h1>
+      <p style="color:#ffaaaa; font-size:18px;">База уничтожена!</p>
+      <ul class="stats-list">
+        <li>Достигнуто волн: <span id="finalWave">0</span></li>
+        <li>Убито врагов: <span id="finalKills">0</span></li>
+        <li>Осталось денег: <span id="finalMoney">$0</span></li>
+      </ul>
+      <button class="bigBtn" id="restartBtn">ПОПРОБОВАТЬ СНОВА</button>
+    </div>
+  </div>
+
+  <div id="bottom">
+    <div id="shop"></div>
+    
+    <div id="info">
+      <b>Выбери башню</b>
+      Кликни по кнопке снизу, затем поставь её на карту.
+    </div>
+  </div>
+</div>
+
+<script>
+// === КОНФИГУРАЦИЯ ===
+const COLS = 16;
+const ROWS = 10;
+const TILE = 60;
+const W = COLS * TILE;
+const H = ROWS * TILE;
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+// DOM Elements
+const waveTxt = document.getElementById('waveTxt');
+const moneyTxt = document.getElementById('moneyTxt');
+const livesTxt = document.getElementById('livesTxt');
+const killsTxt = document.getElementById('killsTxt');
+const nextBtn = document.getElementById('nextBtn');
+const shopEl = document.getElementById('shop');
+const infoEl = document.getElementById('info');
+const menuEl = document.getElementById('menu');
+const overEl = document.getElementById('overScreen');
+const playBtn = document.getElementById('playBtn');
+const restartBtn = document.getElementById('restartBtn');
+const finalWave = document.getElementById('finalWave');
+const finalKills = document.getElementById('finalKills');
+const finalMoney = document.getElementById('finalMoney');
+
+// Данные башен
+const TOWER_TYPES = {
+  gun: { name: 'Пулемёт', cost: 50, range: 110, rate: 20, dmg: 8, color: '#00e5ff', icon: '🔫' },
+  laser: { name: 'Лазер', cost: 90, range: 140, rate: 1, dmg: 0.6, color: '#ff33ff', icon: '⚡' },
+  rocket: { name: 'Ракета', cost: 150, range: 160, rate: 70, dmg: 40, splash: 60, color: '#ff8a00', icon: '🚀' },
+  freeze: { name: 'Заморозка', cost: 80, range: 100, rate: 40, dmg: 4, slow: 120, color: '#7fd8ff', icon: '❄️' }
+};
+
+// Данные врагов
+const ENEMY_TYPES = {
+  basic: { hp: 40, speed: 1.2, reward: 8, radius: 12, color: '#ff4040' },
+  fast:  { hp: 25, speed: 2.0, reward: 10, radius: 10, color: '#ffd24d' },
+  tank:  { hp: 120, speed: 0.7, reward: 20, radius: 16, color: '#b45cff' },
+  boss:  { hp: 800, speed: 0.5, reward: 100, radius: 25, color: '#ff7a00' }
+};
+
+// Путь врагов
+const waypointsCells = [
+  { x: -1, y: 2 }, { x: 3, y: 2 }, { x: 3, y: 7 }, 
+  { x: 8, y: 7 }, { x: 8, y: 3 }, { x: 12, y: 3 }, 
+  { x: 12, y: 8 }, { x: 16, y: 8 }
+];
+
+const pathPixels = waypointsCells.map(p => ({
+  x: (p.x + 0.5) * TILE,
+  y: (p.y + 0.5) * TILE
+}));
+
+const pathCells = new Set();
+for (let i = 0; i < waypointsCells.length - 1; i++) {
+  const a = waypointsCells[i];
+  const b = waypointsCells[i+1];
+  let x = a.x, y = a.y;
+  const dx = Math.sign(b.x - a.x);
+  const dy = Math.sign(b.y - a.y);
+  
+  if(x >= 0 && x < COLS && y >= 0 && y < ROWS) pathCells.add(`${x},${y}`);
+
+  while (x !== b.x || y !== b.y) {
+    x += dx;
+    y += dy;
+    if(x >= 0 && x < COLS && y >= 0 && y < ROWS) pathCells.add(`${x},${y}`);
+  }
+}
+
+// === СОСТОЯНИЕ ИГРЫ ===
+let state = {
+  money: 0,
+  lives: 0,
+  wave: 0,
+  kills: 0,
+  running: false,
+  gameOver: false,
+  enemies: [],
+  towers: [],
+  projectiles: [],
+  effects: [],
+  waveQueue: [],
+  spawnTimer: 0,
+  waveActive: false,
+  selectedBuildType: null,
+  selectedTowerInstance: null,
+  hoverCell: { x: -1, y: -1 }
+};
+
+// === КЛАССЫ ===
+
+class Enemy {
+  constructor(type, waveNum) {
+    const def = ENEMY_TYPES[type];
+    this.type = type;
+    this.maxHp = Math.floor(def.hp * (1 + (waveNum - 1) * 0.25));
+    this.hp = this.maxHp;
+    this.baseSpeed = def.speed;
+    this.reward = def.reward;
+    this.radius = def.radius;
+    this.color = def.color;
+    
+    this.pathIndex = 0;
+    this.x = pathPixels[0].x;
+    this.y = pathPixels[0].y;
+    this.dead = false;
+    this.reachedEnd = false; // Флаг достижения базы
+    this.slowTimer = 0;
+  }
+
+  update(dt) {
+    if (this.dead || this.reachedEnd) return;
+
+    let currentSpeed = this.baseSpeed;
+    if (this.slowTimer > 0) {
+      currentSpeed *= 0.5;
+      this.slowTimer -= dt;
+    }
+
+    const target = pathPixels[this.pathIndex + 1];
+    
+    // Если достигли последнего пункта пути
+    if (!target) {
+      this.reachedEnd = true;
+      state.lives--;
+      updateHUD();
+      checkGameOver(); // Проверка поражения
+      return;
+    }
+
+    const dx = target.x - this.x;
+    const dy = target.y - this.y;
+    const dist = Math.hypot(dx, dy);
+    const moveStep = currentSpeed * dt * 1.5;
+
+    if (dist <= moveStep) {
+      this.x = target.x;
+      this.y = target.y;
+      this.pathIndex++;
+    } else {
+      this.x += (dx / dist) * moveStep;
+      this.y += (dy / dist) * moveStep;
+    }
+  }
+
+  takeDamage(amount) {
+    if(this.dead || this.reachedEnd) return;
+    this.hp -= amount;
+    if (this.hp <= 0) {
+      this.dead = true;
+      state.money += this.reward;
+      state.kills++;
+      createEffect(this.x, this.y, 'text', '+$' + this.reward, '#0f0');
+      updateHUD();
+    }
+  }
+}
+
+class Tower {
+  constructor(type, cellX, cellY) {
+    this.type = type;
+    this.def = TOWER_TYPES[type];
+    this.cellX = cellX;
+    this.cellY = cellY;
+    this.x = (cellX + 0.5) * TILE;
+    this.y = (cellY + 0.5) * TILE;
+    this.level = 1;
+    this.cooldown = 0;
+    this.target = null;
+    this.angle = 0;
+  }
+
+  get range() { return this.def.range * (1 + (this.level - 1) * 0.1); }
+  get damage() { return this.def.dmg * (1 + (this.level - 1) * 0.5); }
+  get fireRate() { return this.def.rate / (1 + (this.level - 1) * 0.15); }
+
+  update(dt) {
+    this.cooldown -= dt;
+
+    this.target = null;
+    let closestDist = Infinity;
+    
+    for (const enemy of state.enemies) {
+      if (enemy.dead || enemy.reachedEnd) continue;
+      const d = Math.hypot(enemy.x - this.x, enemy.y - this.y);
+      if (d <= this.range && d < closestDist) {
+        closestDist = d;
+        this.target = enemy;
+      }
+    }
+
+    if (this.target) {
+      this.angle = Math.atan2(this.target.y - this.y, this.target.x - this.x);
+
+      if (this.cooldown <= 0) {
+        this.fire();
+        this.cooldown = this.fireRate;
+      }
+    }
+  }
+
+  fire() {
+    if (this.type === 'laser') {
+      if(this.target) this.target.takeDamage(this.damage);
+      createBeamEffect(this.x, this.y, this.target.x, this.target.y, this.def.color);
+    } else {
+      state.projectiles.push(new Projectile(this, this.target));
+    }
+  }
+}
+
+class Projectile {
+  constructor(tower, target) {
+    this.x = tower.x;
+    this.y = tower.y;
+    this.target = target;
+    this.speed = 8;
+    this.damage = tower.damage;
+    this.splash = tower.def.splash || 0;
+    this.slow = tower.def.slow || 0;
+    this.color = tower.def.color;
+    this.dead = false;
+  }
+
+  update(dt) {
+    if (!this.target || this.target.dead || this.target.reachedEnd) {
+      this.dead = true;
+      return;
+    }
+
+    const dx = this.target.x - this.x;
+    const dy = this.target.y - this.y;
+    const dist = Math.hypot(dx, dy);
+    const step = this.speed * dt * 2;
+
+    if (dist <= step) {
+      this.hit();
+      this.dead = true;
+    } else {
+      this.x += (dx / dist) * step;
+      this.y += (dy / dist) * step;
+    }
+  }
+
+  hit() {
+    if (this.splash > 0) {
+      createExplosion(this.x, this.y, this.splash, this.color);
+      for (const e of state.enemies) {
+        if (e.dead || e.reachedEnd) continue;
+        const d = Math.hypot(e.x - this.x, e.y - this.y);
+        if (d <= this.splash) {
+          e.takeDamage(this.damage);
+        }
+      }
+    } else {
+      this.target.takeDamage(this.damage);
+      if (this.slow > 0) {
+        this.target.slowTimer = this.slow;
+      }
+      createHitEffect(this.x, this.y, this.color);
+    }
+  }
+}
+
+// === ЭФФЕКТЫ ===
+function createEffect(x, y, type, text, color) {
+  state.effects.push({ x, y, type, text, color, life: 60 });
+}
+function createHitEffect(x, y, color) {
+  state.effects.push({ x, y, type: 'circle', color, r: 5, maxR: 15, life: 10 });
+}
+function createExplosion(x, y, radius, color) {
+  state.effects.push({ x, y, type: 'explosion', color, r: 5, maxR: radius, life: 20 });
+}
+function createBeamEffect(x1, y1, x2, y2, color) {
+  state.effects.push({ x1, y1, x2, y2, type: 'beam', color, life: 5 });
+}
+
+function updateEffects(dt) {
+  for (let i = state.effects.length - 1; i >= 0; i--) {
+    const e = state.effects[i];
+    e.life -= dt;
+    
+    if (e.type === 'circle' || e.type === 'explosion') {
+      e.r += (e.maxR - e.r) * 0.2;
+    }
+    if (e.type === 'text') {
+      e.y -= 0.5;
+    }
+
+    if (e.life <= 0) {
+      state.effects.splice(i, 1);
+    }
+  }
+}
+
+// === ЛОГИКА ВОЛН ===
+function startNextWave() {
+  if (state.waveActive || state.gameOver) return;
+  
+  state.wave++;
+  state.waveActive = true;
+  updateHUD();
+  
+  state.waveQueue = [];
+  const count = 5 + Math.floor(state.wave * 1.5);
+  const isBossWave = state.wave % 5 === 0;
+
+  if (isBossWave) {
+    state.waveQueue.push({ type: 'boss', delay: 60 });
+  }
+
+  for (let i = 0; i < count; i++) {
+    let type = 'basic';
+    const rand = Math.random();
+    if (state.wave > 2 && rand < 0.3) type = 'fast';
+    else if (state.wave > 4 && rand > 0.7) type = 'tank';
+    
+    state.waveQueue.push({ type, delay: 30 });
+  }
+  
+  state.spawnTimer = 0;
+  nextBtn.disabled = true;
+  nextBtn.textContent = "Волна идёт...";
+}
+
+function processSpawning(dt) {
+  if (!state.waveActive || state.gameOver) return;
+
+  if (state.waveQueue.length > 0) {
+    state.spawnTimer -= dt;
+    if (state.spawnTimer <= 0) {
+      const item = state.waveQueue.shift();
+      state.enemies.push(new Enemy(item.type, state.wave));
+      state.spawnTimer = item.delay;
+    }
+  } else if (state.enemies.length === 0) {
+    // Волна завершена успешно
+    state.waveActive = false;
+    state.money += 50 + state.wave * 10;
+    updateHUD();
+    nextBtn.disabled = false;
+    nextBtn.textContent = "▶ Следующая волна";
+    createEffect(W/2, H/2, 'text', `ВОЛНА ${state.wave} ПРОЙДЕНА!`, '#0ff');
+  }
+}
+
+// === ПРОВЕРКА ПОРАЖЕНИЯ ===
+function checkGameOver() {
+  if (state.lives <= 0 && !state.gameOver) {
+    state.gameOver = true;
+    state.running = false;
+    
+    // Заполняем статистику
+    finalWave.textContent = state.wave;
+    finalKills.textContent = state.kills;
+    finalMoney.textContent = '$' + state.money;
+    
+    // Показываем экран
+    overEl.classList.remove('hidden');
+  }
+}
+
+// === УПРАВЛЕНИЕ ===
+
+function getMousePos(evt) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  
+  let clientX, clientY;
+  if (evt.touches && evt.touches.length > 0) {
+    clientX = evt.touches[0].clientX;
+    clientY = evt.touches[0].clientY;
+  } else {
+    clientX = evt.clientX;
+    clientY = evt.clientY;
+  }
+
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY
+  };
+}
+
+canvas.addEventListener('mousemove', (e) => {
+  const pos = getMousePos(e);
+  const gx = Math.floor(pos.x / TILE);
+  const gy = Math.floor(pos.y / TILE);
+  state.hoverCell = { x: gx, y: gy };
+});
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  const pos = getMousePos(e);
+  const gx = Math.floor(pos.x / TILE);
+  const gy = Math.floor(pos.y / TILE);
+  state.hoverCell = { x: gx, y: gy };
+}, { passive: false });
+
+function handleClick(e) {
+  if (!state.running || state.gameOver) return;
+  
+  const pos = getMousePos(e);
+  const gx = Math.floor(pos.x / TILE);
+  const gy = Math.floor(pos.y / TILE);
+
+  if (gx < 0 || gx >= COLS || gy < 0 || gy >= ROWS) return;
+
+  if (state.selectedBuildType) {
+    buildTower(gx, gy, state.selectedBuildType);
+    return;
+  }
+
+  const existingTower = state.towers.find(t => t.cellX === gx && t.cellY === gy);
+  if (existingTower) {
+    state.selectedTowerInstance = existingTower;
+    state.selectedBuildType = null;
+    updateShopUI();
+    updateInfoPanel();
+  } else {
+    state.selectedTowerInstance = null;
+    state.selectedBuildType = null;
+    updateShopUI();
+    updateInfoPanel();
+  }
+}
+
+canvas.addEventListener('click', handleClick);
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  handleClick(e);
+}, { passive: false });
+
+window.addEventListener('keydown', (e) => {
+  if (!state.running) return;
+  const keys = ['1', '2', '3', '4'];
+  const types = Object.keys(TOWER_TYPES);
+  const idx = keys.indexOf(e.key);
+  if (idx !== -1 && types[idx]) {
+    selectBuildType(types[idx]);
+  }
+  if (e.key === 'Escape') {
+    state.selectedBuildType = null;
+    state.selectedTowerInstance = null;
+    updateShopUI();
+    updateInfoPanel();
+  }
+});
+
+// === ПОСТРОЙКА И ВЫБОР ===
+
+function buildTower(gx, gy, type) {
+  const def = TOWER_TYPES[type];
+  
+  if (pathCells.has(`${gx},${gy}`)) {
+    showMessage("Нельзя строить на пути!", "#f00");
+    return;
+  }
+  if (state.towers.some(t => t.cellX === gx && t.cellY === gy)) {
+    showMessage("Здесь уже есть башня!", "#f00");
+    return;
+  }
+  if (state.money < def.cost) {
+    showMessage("Недостаточно денег!", "#f00");
+    return;
+  }
+
+  state.money -= def.cost;
+  state.towers.push(new Tower(type, gx, gy));
+  state.selectedBuildType = null;
+  updateHUD();
+  updateShopUI();
+  updateInfoPanel();
+  createEffect((gx+0.5)*TILE, (gy+0.5)*TILE, 'circle', '#0f0', 20);
+}
+
+function selectBuildType(type) {
+  state.selectedBuildType = type;
+  state.selectedTowerInstance = null;
+  updateShopUI();
+  updateInfoPanel();
+}
+
+function upgradeSelectedTower() {
+  const t = state.selectedTowerInstance;
+  if (!t || t.level >= 3) return;
+
+  const cost = Math.floor(t.def.cost * 0.8 * t.level);
+  if (state.money < cost) {
+    showMessage("Нет денег на улучшение", "#f00");
+    return;
+  }
+
+  state.money -= cost;
+  t.level++;
+  updateHUD();
+  updateInfoPanel();
+  createEffect(t.x, t.y, 'text', "LVL UP!", "#ff0");
+}
+
+function sellSelectedTower() {
+  const t = state.selectedTowerInstance;
+  if (!t) return;
+
+  const refund = Math.floor(t.def.cost * 0.7);
+  state.money += refund;
+  
+  const idx = state.towers.indexOf(t);
+  if (idx !== -1) state.towers.splice(idx, 1);
+  
+  state.selectedTowerInstance = null;
+  updateHUD();
+  updateShopUI();
+  updateInfoPanel();
+  createEffect(t.x, t.y, 'text', "+$" + refund, "#0f0");
+}
+
+// === UI ===
+
+function initShop() {
+  shopEl.innerHTML = '';
+  Object.entries(TOWER_TYPES).forEach(([key, def], index) => {
+    const btn = document.createElement('button');
+    btn.className = 'shopBtn';
+    btn.id = 'btn-' + key;
+    btn.innerHTML = `${def.icon}<br>${def.name}<small>$${def.cost}</small>`;
+    btn.onclick = () => selectBuildType(key);
+    shopEl.appendChild(btn);
+  });
+}
+
+function updateShopUI() {
+  Object.keys(TOWER_TYPES).forEach(key => {
+    const btn = document.getElementById('btn-' + key);
+    if (btn) {
+      const canAfford = state.money >= TOWER_TYPES[key].cost;
+      btn.classList.toggle('active', state.selectedBuildType === key);
+      btn.classList.toggle('disabled', !canAfford);
+    }
+  });
+}
+
+function updateInfoPanel() {
+  if (state.selectedTowerInstance) {
+    const t = state.selectedTowerInstance;
+    const upCost = Math.floor(t.def.cost * 0.8 * t.level);
+    const sellVal = Math.floor(t.def.cost * 0.7);
+    
+    infoEl.innerHTML = `
+      <b>${t.def.icon} ${t.def.name} (Ур. ${t.level})</b>
+      Урон: ${Math.round(t.damage * 10)/10}<br>
+      Дальность: ${Math.round(t.range)}<br>
+      <div id="actions">
+        <button class="action" onclick="upgradeSelectedTower()" ${t.level>=3?'disabled':''}>
+          ${t.level>=3 ? 'МАКС' : 'Улучшить ($'+upCost+')'}
+        </button>
+        <button class="action sell" onclick="sellSelectedTower()">
+          Продать (+$${sellVal})
+        </button>
+      </div>
+    `;
+  } else if (state.selectedBuildType) {
+    const def = TOWER_TYPES[state.selectedBuildType];
+    infoEl.innerHTML = `
+      <b>${def.icon} ${def.name}</b>
+      Цена: $${def.cost}<br>
+      Урон: ${def.dmg}<br>
+      Дальность: ${def.range}<br>
+      <i>Кликни по карте для установки</i>
+    `;
+  } else {
+    infoEl.innerHTML = `<b>Подсказка</b><br>Выбери башню из меню или кликни по готовой башне.`;
+  }
+}
+
+function updateHUD() {
+  waveTxt.textContent = state.wave;
+  moneyTxt.textContent = state.money;
+  livesTxt.textContent = Math.max(0, state.lives);
+  killsTxt.textContent = state.kills;
+  updateShopUI();
+}
+
+function showMessage(text, color) {
+  createEffect(W/2, 50, 'text', text, color);
+}
+
+// === ЦИКЛ ===
+
+function update(dt) {
+  if (!state.running || state.gameOver) return;
+
+  processSpawning(dt);
+
+  // Обновление врагов
+  for (let i = state.enemies.length - 1; i >= 0; i--) {
+    const e = state.enemies[i];
+    e.update(dt);
+    // Удаляем мертвых или тех, кто дошел до конца
+    if (e.dead || e.reachedEnd) {
+      state.enemies.splice(i, 1);
+    }
+  }
+
+  state.towers.forEach(t => t.update(dt));
+
+  for (let i = state.projectiles.length - 1; i >= 0; i--) {
+    const p = state.projectiles[i];
+    p.update(dt);
+    if (p.dead) state.projectiles.splice(i, 1);
+  }
+
+  updateEffects(dt);
+}
+
+function draw() {
+  ctx.fillStyle = '#07091a';
+  ctx.fillRect(0, 0, W, H);
+
+  // Сетка
+  ctx.strokeStyle = 'rgba(0,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for(let x=0; x<=COLS; x++) {
+    ctx.beginPath(); ctx.moveTo(x*TILE, 0); ctx.lineTo(x*TILE, H); ctx.stroke();
+  }
+  for(let y=0; y<=ROWS; y++) {
+    ctx.beginPath(); ctx.moveTo(0, y*TILE); ctx.lineTo(W, y*TILE); ctx.stroke();
+  }
+
+  // Путь
+  ctx.strokeStyle = 'rgba(0,255,255,0.2)';
+  ctx.lineWidth = TILE * 0.6;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(pathPixels[0].x, pathPixels[0].y);
+  for(let i=1; i<pathPixels.length; i++) {
+    ctx.lineTo(pathPixels[i].x, pathPixels[i].y);
+  }
+  ctx.stroke();
+  
+  ctx.strokeStyle = '#0a0c1e';
+  ctx.lineWidth = TILE * 0.4;
+  ctx.stroke();
+
+  // Призрак стройки
+  if (state.selectedBuildType && state.hoverCell.x >= 0) {
+    const hx = state.hoverCell.x;
+    const hy = state.hoverCell.y;
+    const cx = (hx + 0.5) * TILE;
+    const cy = (hy + 0.5) * TILE;
+    
+    const isValid = !pathCells.has(`${hx},${hy}`) && !state.towers.some(t=>t.cellX===hx&&t.cellY===hy);
+    
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = isValid ? '#0f0' : '#f00';
+    ctx.fillRect(hx*TILE, hy*TILE, TILE, TILE);
+    
+    ctx.strokeStyle = isValid ? 'rgba(0,255,0,0.5)' : 'rgba(255,0,0,0.5)';
+    ctx.setLineDash([5,5]);
+    ctx.beginPath();
+    ctx.arc(cx, cy, TOWER_TYPES[state.selectedBuildType].range, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+
+  // Выбранная башня
+  if (state.selectedTowerInstance) {
+    const t = state.selectedTowerInstance;
+    ctx.strokeStyle = 'rgba(0,255,255,0.8)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5,5]);
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, t.range, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    ctx.fillStyle = 'rgba(0,255,255,0.2)';
+    ctx.fillRect(t.cellX*TILE, t.cellY*TILE, TILE, TILE);
+  }
+
+  // Башни
+  state.towers.forEach(t => {
+    ctx.save();
+    ctx.translate(t.x, t.y);
+    
+    ctx.fillStyle = '#112';
+    ctx.beginPath();
+    ctx.arc(0, 0, 20, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = t.def.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.rotate(t.angle);
+    ctx.fillStyle = t.def.color;
+    if (t.type === 'gun') {
+      ctx.fillRect(0, -4, 25, 8);
+    } else if (t.type === 'rocket') {
+      ctx.fillRect(0, -6, 20, 12);
+    } else if (t.type === 'freeze') {
+      ctx.beginPath();
+      ctx.moveTo(15, 0); ctx.lineTo(0, 10); ctx.lineTo(0, -10);
+      ctx.fill();
+    } else if (t.type === 'laser') {
+      ctx.fillRect(0, -2, 20, 4);
+    }
+    
+    ctx.restore();
+    ctx.fillStyle = '#fff';
+    for(let i=0; i<t.level; i++) {
+      ctx.beginPath();
+      ctx.arc(t.x - 10 + i*10, t.y + 25, 2, 0, Math.PI*2);
+      ctx.fill();
+    }
+  });
+
+  // Враги
+  state.enemies.forEach(e => {
+    ctx.fillStyle = e.color;
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2);
+    ctx.fill();
+    
+    const pct = e.hp / e.maxHp;
+    ctx.fillStyle = 'red';
+    ctx.fillRect(e.x - 10, e.y - e.radius - 8, 20, 4);
+    ctx.fillStyle = '#0f0';
+    ctx.fillRect(e.x - 10, e.y - e.radius - 8, 20 * pct, 4);
+  });
+
+  // Снаряды
+  ctx.fillStyle = '#fff';
+  state.projectiles.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  // Эффекты
+  state.effects.forEach(e => {
+    ctx.globalAlpha = e.life / 60;
+    if (e.type === 'text') {
+      ctx.fillStyle = e.color;
+      ctx.font = 'bold 16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(e.text, e.x, e.y);
+    } else if (e.type === 'circle' || e.type === 'explosion') {
+      ctx.strokeStyle = e.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.r, 0, Math.PI*2);
+      ctx.stroke();
+    } else if (e.type === 'beam') {
+      ctx.strokeStyle = e.color;
+      ctx.lineWidth = 3;
+      ctx.shadowColor = e.color;
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.moveTo(e.x1, e.y1);
+      ctx.lineTo(e.x2, e.y2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+    ctx.globalAlpha = 1;
+  });
+}
+
+let lastTime = performance.now();
+function loop(now) {
+  const dt = (now - lastTime) / 16.66;
+  lastTime = now;
+  
+  update(Math.min(dt, 2));
+  draw();
+  
+  requestAnimationFrame(loop);
+}
+
+// === СТАРТ ===
+
+function resetGame() {
+  state.money = 200;
+  state.lives = 20;
+  state.wave = 0;
+  state.kills = 0;
+  state.enemies = [];
+  state.towers = [];
+  state.projectiles = [];
+  state.effects = [];
+  state.waveQueue = [];
+  state.waveActive = false;
+  state.selectedBuildType = null;
+  state.selectedTowerInstance = null;
+  state.gameOver = false;
+  state.running = true;
+  
+  updateHUD();
+  updateInfoPanel();
+  nextBtn.disabled = false;
+  nextBtn.textContent = "▶ Начать волну";
+}
+
+initShop();
+updateHUD();
+updateInfoPanel();
+
+playBtn.onclick = () => {
+  menuEl.classList.add('hidden');
+  resetGame();
+};
+
+restartBtn.onclick = () => {
+  overEl.classList.add('hidden');
+  resetGame();
+};
+
+nextBtn.onclick = startNextWave;
+
+requestAnimationFrame(loop);
+
+</script>
+</body>
+</html>
